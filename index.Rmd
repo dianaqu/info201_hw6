@@ -1,0 +1,64 @@
+---
+title: "Homework 6"
+output: html_document
+---
+
+```{r echo=FALSE, message = FALSE}
+#install.packages('dplyr')
+library(dplyr)
+
+shootings.2016 <- read.csv('data/shootings-2016.csv', stringsAsFactors = FALSE)
+
+total.shooting <- nrow(shootings.2016)
+total.kill <- shootings.2016 %>% summarise(total = sum(killed))
+
+## most people got injured and killed.
+table.city <- shootings.2016 %>% group_by(city) %>% summarise(total = sum(injured + killed))
+most.affect.city <- shootings.2016 %>% group_by(city) %>% summarise(total = sum(injured + killed)) %>% filter(total == max(total)) %>% select(city)
+
+
+# which day/month have the most people affected
+table.date <- shootings.2016 %>% group_by(date) %>% summarise(total = sum(injured + killed))
+day.most.shooting <- shootings.2016 %>% group_by(date) %>% summarise(total = sum(injured + killed)) %>% filter(total == max(total)) %>% select(date)
+```
+There are total of `r total.shooting` shooting occured in 2016. The total number of people killed is `r total.kill`. The city that got most death and injued are `r most.affect.city[1,]`. On day `r day.most.shooting` there are most people got killed or injured.
+
+```{r echo=FALSE, message = FALSE}
+#install.packages('knitr')
+library(knitr)
+library(dplyr)
+top10 <- table.city %>% arrange(-total) %>% top_n(10)
+kable(top10, caption = 'Total life Affect in Each City')
+```
+
+`The above table is the top 10 city with the most people's life affect, which is killed and injured`
+
+```{r echo=FALSE, message = FALSE}
+random.shooting <- sample_n(shootings.2016, 1)
+date <- random.shooting$date
+city <- random.shooting$city
+state <- random.shooting$state
+injured <- random.shooting$injured
+killed <- random.shooting$killed
+total <- killed + injured
+```
+
+For the incidence happed on `r date` at `r city`, `r state`, there are `r injured` people injured and `r killed` people got killed. There are total of `r total` people got affected in this incidence, not counting the family member got inloved. For more information on this incidence. Go to this [link](x)
+
+```{r echo=FALSE, message = FALSE}
+#install.packages('plotly')
+library(plotly)
+library(dplyr)
+
+hover <- paste(shootings.2016$city, ', ', shootings.2016$state, '<br>', shootings.2016$date, '<br>', 'Injured', shootings.2016$injured, ', Killed', shootings.2016$killed)
+plot_ly(type = 'scattergeo', lon = shootings.2016$lng, lat = shootings.2016$lat, text = hover, hoverinfo = 'text', mode = 'marker', opacity = 0.5, symbol = I('square')) %>% layout(geo = list(scope = 'usa'), title = 'Shooting in USA in 2016')
+
+```
+
+```{r echo=FALSE, message = FALSE}
+library(plotly)
+library(dplyr)
+
+state.shooting <- shootings.2016 %>% group_by(state) %>% summarise(total = sum(injured + killed))
+plot_ly(state.shooting, labels = ~state, values = ~total, type = 'pie', textposition = 'inside', textinfo = 'state', insidetextfont = list(color = '#FFFFFF'), opacity = 0.8, text = state, hoverinfo = 'text') %>% layout(title = '2016 Shooting Life Affect by State', xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE), yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE))
+```
